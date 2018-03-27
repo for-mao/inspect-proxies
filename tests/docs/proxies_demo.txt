@@ -1,0 +1,2 @@
+{'scheme': 'http', 'username': 'hello', 'password': 'world', 'ip': '127.0.0.1', 'port': '8787'},
+{'scheme': 'https', 'domain': 'www.test.com'},
