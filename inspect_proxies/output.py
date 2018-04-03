@@ -10,14 +10,16 @@ class Output(object):
     def __init__(
             self, data: Queue,
             _format: Callable=output_format,
-            position: Callable=output_position_console
+            position: Callable=output_position_console,
+            **kwargs
     ):
         self.data = data
         self.format = _format
         self.position = position
+        self.kwargs = kwargs
 
     def output(self):
         while not self.data.empty():
-            self.position(self.format(self.data.get()))
+            self.position(self.format(self.data.get()), **self.kwargs)
 
 

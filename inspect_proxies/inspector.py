@@ -1,11 +1,16 @@
 from queue import Queue
 from threading import Thread
+from threading import current_thread
 from typing import Tuple
 
 from requests.api import request
 
 from inspect_proxies.output import Output
 from inspect_proxies.utils import InspectResult
+from inspect_proxies.utils.logs import create_logger
+from inspect_proxies.utils.logs import root_logger
+
+logger = create_logger(__name__)
 
 
 class ThreadProxyInspector(object):
@@ -15,6 +20,7 @@ class ThreadProxyInspector(object):
         :param storage:
         :param kwargs:
         """
+        root_logger.setLevel(kwargs.get('log_level', root_logger.level))
         self.proxies = Queue()
         self.result = Queue()
         self.__threads = None
@@ -26,6 +32,14 @@ class ThreadProxyInspector(object):
         self.output_c = kwargs.get('output', Output)
         self.output_params = kwargs.get('output_params', {})
         self.output = None
+        self.print_msg()
+
+    def print_msg(self):
+        logger.info(
+            'Start to inspect proxies '
+            'with multiple threads[{}]'.format(self.thread_number)
+        )
+        logger.info('Await inspect url>>>{}'.format(self.url))
 
     @property
     def threads(self) -> [Tuple, None]:
@@ -34,32 +48,38 @@ class ThreadProxyInspector(object):
     def run(self):
         self.create_threads()
         self.load_proxies()
-        self.await_task_done()
         self.output = self.output_c(self.result, **self.output_params)
+        logger.info('The environment initialization is complete')
+        self.await_task_done()
+        logger.info('output result with {}'.format(self.output_c.__name__))
         self.output.output()
 
     def thread_task(self):
         while True:
             proxy = self.proxies.get()
+            params = self.requests_params.copy()
             try:
                 resp = request(
-                    self.requests_params.pop('method')
-                    if 'method' in self.requests_params else 'get',
-                    self.url, proxies=proxy, **self.requests_params)
+                    params.pop('method', 'get'),
+                    self.url, proxies=proxy, **params)
             except Exception as exc:
-                self.result.put(
-                    InspectResult(
-                        response=None, proxy=proxy, error=exc, url=self.url
-                    ))
+                res = InspectResult(
+                    response=None, proxy=proxy, error=exc, url=self.url)
             else:
-                self.result.put(
-                    InspectResult(
-                        response=resp, proxy=proxy, error=None, url=self.url
-                    ))
+                res = InspectResult(
+                    response=resp, proxy=proxy, error=None, url=self.url
+                )
             finally:
+                logger.debug('[{name}] inspect proxy {proxy} ({result})'.format(
+                    name=current_thread().name,
+                    proxy=next(iter(proxy.values())),
+                    result=res.response or res.error
+                ))
+                self.result.put(res)
                 self.proxies.task_done()
 
     def create_threads(self):
+        logger.debug('Start to create threads')
         _list = []
         for i in range(self.thread_number):
             t = Thread(
@@ -76,9 +96,13 @@ class ThreadProxyInspector(object):
         from storage load proxy to self.proxies
         :return:
         """
+        logger.debug('Start to load proxies from {}'.format(
+            self.storage.__name__))
         storage = self.storage(**self.storage_params)
         for proxy in storage.get_proxies():
             self.proxies.put(proxy)
+        logger.info('Successfully load {} proxies'.format(self.proxies.qsize()))
 
     def await_task_done(self):
+        logger.info('Wait for all inspection tasks to be completed.')
         self.proxies.join()

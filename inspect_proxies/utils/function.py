@@ -2,12 +2,50 @@ from json import dumps
 from json import loads
 from typing import Dict
 from typing import Generator
+from urllib.parse import urlparse
 
 from pymongo.cursor import Cursor
 from pymongo import MongoClient
+from pymongo.collection import Collection
 
 from inspect_proxies.utils import InspectResult
 from inspect_proxies.utils import pp
+
+
+def _parse_auth_uri(uri: str) -> Dict:
+    if '@' in uri:
+        split_res = uri.split('@')
+        user, pwd = split_res[0].split(':')
+        host, port = split_res[1].split(':')
+    else:
+        user, pwd = (None, None)
+        host, port = uri.split(':')
+    return {
+        'username': user,
+        'password': pwd,
+        'ip': host,
+        'port': port
+    }
+
+
+def parse_requests_proxy(proxy: Dict) -> Dict:
+    """
+    :param proxy: {'http': 'http://...'}
+    :return:
+    """
+    for scheme, p in proxy.items():
+        res = {'scheme': scheme}
+        auth = urlparse(p).netloc
+        res.update(_parse_auth_uri(auth))
+        return res
+
+
+def output_format_view_proxy(doc: InspectResult) -> Dict:
+    res = output_format(doc)
+    del res['proxy']
+    res['exception'] = str(res['exception'])
+    res.update(parse_requests_proxy(doc.proxy))
+    return res
 
 
 def output_format(doc: InspectResult) -> Dict:
@@ -34,6 +72,10 @@ def output_format(doc: InspectResult) -> Dict:
 
 def output_position_console(doc: Dict):
     pp.pprint(doc)
+
+
+def output_position_mongodb(doc: Dict, coll: Collection):
+    coll.insert_one(doc)
 
 
 def parse_file_proxy(line: [str, Dict]) -> Dict:
