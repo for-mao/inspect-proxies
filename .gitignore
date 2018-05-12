@@ -5,6 +5,7 @@ __pycache__/
 
 # pycharm
 .idea
+*/.cache/
 
 # own_private
 *private_settings.py
