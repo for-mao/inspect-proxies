@@ -4,8 +4,8 @@ __pycache__/
 *$py.class
 
 # pycharm
-.idea
-*/.cache*
+*.idea/
+*.cache/
 
 # own_private
 *private_settings.py

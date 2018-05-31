@@ -2,7 +2,7 @@ from random import choice
 from inspect_proxies.inspector import ThreadProxyInspector
 from inspect_proxies.output import Output
 from inspect_proxies.storage import Storage
-from inspect_proxies.utils.function import parse_file_proxy
+from inspect_proxies.utils.function import create_request_proxy
 from inspect_proxies.utils.function import mongodb_storage
 from inspect_proxies.utils.function import output_format_view_proxy
 from inspect_proxies.utils.function import output_position_mongodb
@@ -19,7 +19,8 @@ params = {
     'log_level': DEBUG,
     'thread_number': 50,  # default 20
     # 'url': choice(URLS),  # default https://httpbin.org
-    'url': 'https://www.linkedin.com',
+    # 'url': 'https://www.linkedin.com',
+    'url': 'http://httpbin.org',
     'requests_params': {
         'method': 'get',  # default get
         'timeout': 10,   # no default
@@ -34,12 +35,12 @@ params = {
     },  # your output instantiation required params
     'storage': Storage,  # required
     'storage_params': {
-        'parse': parse_file_proxy,  # required
+        'parse': create_request_proxy,  # required
         'generate_storage': mongodb_storage,   # required
         'mongo_uri': MONGO_URI,  # callable of generate_storage required param
         'db': 'vps_management',
-        'coll': 'service_google_160_1',
-        '_filter': {'scheme': 'https'}
+        'coll': 'service_new_email_shadowsocks',
+        '_filter': {'scheme': 'http'}
     }
 }
 

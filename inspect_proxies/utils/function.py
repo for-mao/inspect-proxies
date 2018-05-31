@@ -24,14 +24,14 @@ def _parse_auth_uri(uri: str) -> Dict:
         'username': user,
         'password': pwd,
         'ip': host,
-        'port': port
+        'port': int(port)
     }
 
 
 def parse_requests_proxy(proxy: Dict) -> Dict:
     """
     :param proxy: {'http': 'http://...'}
-    :return:
+    :return: Dict: keys include username, password, ip, port
     """
     for scheme, p in proxy.items():
         res = {'scheme': scheme}
@@ -41,6 +41,11 @@ def parse_requests_proxy(proxy: Dict) -> Dict:
 
 
 def output_format_view_proxy(doc: InspectResult) -> Dict:
+    """
+    Handle result of output_format view proxy document
+    :param doc:
+    :return:
+    """
     res = output_format(doc)
     del res['proxy']
     res['exception'] = str(res['exception'])
@@ -71,6 +76,7 @@ def output_format(doc: InspectResult) -> Dict:
 
 
 def output_position_console(doc: Dict):
+
     pp.pprint(doc)
 
 
@@ -78,7 +84,7 @@ def output_position_mongodb(doc: Dict, coll: Collection):
     coll.insert_one(doc)
 
 
-def parse_file_proxy(line: [str, Dict]) -> Dict:
+def create_request_proxy(line: [str, Dict]) -> Dict:
     """
     :param line: dict or json
         {'ip': '', 'port': '', 'username': '', 'password':'', 'scheme': ''}
@@ -90,6 +96,8 @@ def parse_file_proxy(line: [str, Dict]) -> Dict:
         raise TypeError(
             "excepted type of line is dict, is not {}".format(type(line))
         )
+    if not line:
+        return {}
     if line.get('username'):
         return {
             line['scheme']: '{scheme}://{username}:{password}@'
@@ -132,4 +140,4 @@ def mongodb_storage(
 if __name__ == '__main__':
     storage = file_storage('../../tests/docs/proxies_demo.txt')
     for i in storage:
-        print(parse_file_proxy(i))
+        print(create_request_proxy(i))
