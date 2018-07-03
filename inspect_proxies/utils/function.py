@@ -12,6 +12,24 @@ from inspect_proxies.utils import InspectResult
 from inspect_proxies.utils import pp
 
 
+def total_numbers(func):
+
+    numbers = {'invalid': 0, 'valid': 0}
+
+    def wrapper(doc, *args, **kwargs):
+        if doc.get('exception'):
+            numbers['invalid'] += 1
+        else:
+            numbers['valid'] += 1
+
+        res = func(doc, *args, **kwargs)
+        print(numbers)
+
+        return res
+
+    return wrapper
+
+
 def _parse_auth_uri(uri: str) -> Dict:
     if '@' in uri:
         split_res = uri.split('@')
@@ -75,6 +93,7 @@ def output_format(doc: InspectResult) -> Dict:
     }
 
 
+@total_numbers
 def output_position_console(doc: Dict):
 
     pp.pprint(doc)

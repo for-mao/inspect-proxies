@@ -20,7 +20,7 @@ params = {
     'thread_number': 50,  # default 20
     # 'url': choice(URLS),  # default https://httpbin.org
     # 'url': 'https://www.linkedin.com',
-    'url': 'http://httpbin.org',
+    # 'url': 'https://www.linkedin.com',
     'requests_params': {
         'method': 'get',  # default get
         'timeout': 10,   # no default
@@ -40,7 +40,7 @@ params = {
         'mongo_uri': MONGO_URI,  # callable of generate_storage required param
         'db': 'vps_management',
         'coll': 'service_new_email_shadowsocks',
-        '_filter': {'scheme': 'http'}
+        '_filter': {'scheme': 'https'}
     }
 }
 
