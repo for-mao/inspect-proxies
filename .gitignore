@@ -9,3 +9,9 @@ __pycache__/
 
 # own_private
 *private_settings.py
+
+# project files
+*invalid_ips.txt
+*invalid_ips
+*search_engine.log
+*run_check_search_engine_proxy.py

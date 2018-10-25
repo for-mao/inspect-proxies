@@ -25,7 +25,7 @@ class ThreadProxyInspector(object):
         self.result = Queue()
         self.__threads = None
         self.thread_number = kwargs.get('thread_number', 20)
-        self.url = kwargs.get('url', 'https://httpbin.org')
+        self.url = kwargs.get('url', 'www.httpbin.org/ip')
         self.requests_params = kwargs.get('requests_params', {})
         self.storage = storage
         self.storage_params = kwargs.get('storage_params')
@@ -59,9 +59,13 @@ class ThreadProxyInspector(object):
             proxy = self.proxies.get()
             params = self.requests_params.copy()
             try:
+                url = "{scheme}://{url}".format(
+                    scheme=next(iter(proxy.keys())),
+                    url=self.url
+                )
                 resp = request(
                     params.pop('method', 'get'),
-                    self.url, proxies=proxy, **params)
+                    url, proxies=proxy, **params)
             except Exception as exc:
                 res = InspectResult(
                     response=None, proxy=proxy, error=exc, url=self.url)
@@ -99,9 +103,11 @@ class ThreadProxyInspector(object):
         logger.debug('Start to load proxies from {}'.format(
             self.storage.__name__))
         storage = self.storage(**self.storage_params)
+        count = 0
         for proxy in storage.get_proxies():
+            count += 1
             self.proxies.put(proxy)
-        logger.info('Successfully load {} proxies'.format(self.proxies.qsize()))
+        logger.info('Successfully load {} proxies'.format(count))
 
     def await_task_done(self):
         logger.info('Wait for all inspection tasks to be completed.')

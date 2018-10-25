@@ -17,13 +17,34 @@ def total_numbers(func):
     numbers = {'invalid': 0, 'valid': 0}
 
     def wrapper(doc, *args, **kwargs):
-        if doc.get('exception'):
+        if doc.get('exception') and doc.get('exception') != 'None':
             numbers['invalid'] += 1
         else:
             numbers['valid'] += 1
 
         res = func(doc, *args, **kwargs)
         print(numbers)
+
+        return res
+
+    return wrapper
+
+
+def collect_invalid_ips(func):
+    import datetime
+    from os.path import abspath
+    from os.path import dirname
+    path = dirname(dirname(dirname(abspath(__file__))))
+    with open('{}/invalid_ips.txt'.format(path), 'a') as f:
+        f.write('\n\n\n{} invalid proxy\n'.format(datetime.datetime.today()))
+
+    def wrapper(doc, *args, **kwargs):
+        if doc.error and doc.error != 'None':
+            proxy = parse_requests_proxy(doc.proxy)
+            with open('{}/invalid_ips.txt'.format(path), 'a') as f:
+                f.write('ip:{}  port:{}\n'.format(proxy['ip'], proxy['port']))
+
+        res = func(doc, *args, **kwargs)
 
         return res
 
@@ -71,6 +92,23 @@ def output_format_view_proxy(doc: InspectResult) -> Dict:
     return res
 
 
+@collect_invalid_ips
+def output_format_filter_invalid_proxy(doc: InspectResult) -> Dict:
+    """
+    Handle result of output_format view proxy document
+    :param doc:
+    :return:
+    """
+    res = output_format(doc)
+    if res['exception'] is None and res['status'] == 200:
+        del res['proxy']
+        del res['exception']
+        res.update(parse_requests_proxy(doc.proxy))
+        return res
+    else:
+        return dict()
+
+
 def output_format(doc: InspectResult) -> Dict:
     """
     from once inspect result extract message
@@ -100,7 +138,8 @@ def output_position_console(doc: Dict):
 
 
 def output_position_mongodb(doc: Dict, coll: Collection):
-    coll.insert_one(doc)
+    if doc:
+        coll.insert_one(doc)
 
 
 def create_request_proxy(line: [str, Dict]) -> Dict:
