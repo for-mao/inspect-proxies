@@ -5,5 +5,5 @@ inspect proxy with multi threads
 ```shell
 $ cd run
 $ mv settings_demo.py private_settings.py  # config private_settings
-python run_check_proxy.py
+$ python run_check_proxy.py
 ```
